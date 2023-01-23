@@ -69,7 +69,7 @@ export const DbDrawVTO = Type.Object({
   timestamp: Type.Number(),
   x: Type.Number(),
   y: Type.Number(),
-  color: Type.Enum(Color),
+  c: Type.Enum(Color),
 })
 
 export type DbDrawVTO = Static<typeof DbDrawVTO>

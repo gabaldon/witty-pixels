@@ -4,11 +4,12 @@ import router from '../router'
 import {
   type Pixel,
   type PalettePoints,
-  type PixelMap,
+  type PixelDB,
   type Errors,
   type InteractionInfo,
   ErrorKey,
 } from '@/types'
+import { COLORS, PIXEL_SIZE, COLOR_FROM_HEX } from '@/constants'
 import { useLocalStore } from './local'
 export const useStore = defineStore('player', {
   state: () => {
@@ -30,38 +31,58 @@ export const useStore = defineStore('player', {
       palettePoints: {} as PalettePoints,
       showPalettePanel: false as boolean,
       pixelToPaint: null as Pixel | null,
-      pixelMap: {} as PixelMap,
+      pixelMap: [] as Array<Array<PixelDB>>,
+      checkpoint: 0,
     }
   },
   actions: {
-    paintPixel() {
-      if (
-        this.pixelMap &&
-        this.selectedColor &&
-        this.pixelToPaint &&
-        !this.pixelMap[this.pixelToPaint.id].author
-      ) {
-        this.pixelMap[this.pixelToPaint.id] = {
-          ...this.pixelToPaint,
-          author: this.username,
-          timestamp: new Date().getTime(),
-          stroke: this.pixelToPaint.fill,
+    async getPixelMap() {
+      const tokenInfo = this.localStore.getToken()
+      const request = await this.api.getCanvas({
+        checkpoint: this.checkpoint,
+        token: tokenInfo.token,
+      })
+      if (request.error) {
+        this.setError(ErrorKey.canvas, request.error)
+      } else {
+        this.pixelMap = request.canvas.pixels
+        this.checkpoint = request.checkpoint
+        this.clearError(ErrorKey.canvas)
+      }
+    },
+    async paintPixel() {
+      if (this.pixelToPaint && this.selectedColor) {
+        const tokenInfo = this.localStore.getToken()
+        const request = await this.api.drawPixel({
+          x: this.pixelToPaint.x / PIXEL_SIZE,
+          y: this.pixelToPaint.y / PIXEL_SIZE,
+          color: COLOR_FROM_HEX[this.pixelToPaint.fill],
+          token: tokenInfo.token,
+        })
+        console.log('paint pixel!!', request)
+        if (request.error) {
+          this.setError(ErrorKey.paint, request.error)
+        } else {
+          this.pixelMap[request.x][request.y] = request
+          console.log('updatedPixel', this.pixelMap[request.x][request.y])
+          this.clearError(ErrorKey.paint)
         }
       }
     },
     setPixelToPaint(pixel: Pixel) {
-      if (this.pixelMap && this.pixelMap[pixel.id].author) {
+      const pixelFromMap = this.pixelMap[pixel.x / PIXEL_SIZE]
+        ? this.pixelMap[pixel.x / PIXEL_SIZE][pixel.y / PIXEL_SIZE]
+        : null
+      if (this.pixelMap && pixelFromMap?.o) {
         if (this.pixelMap) {
           this.pixelToPaint = {
-            ...this.pixelMap[pixel.id],
-            stroke: pixel.stroke,
+            ...pixel,
+            author: pixelFromMap?.o,
+            fill: COLORS[pixelFromMap.c],
           }
         }
       } else {
-        this.pixelToPaint = {
-          ...pixel,
-          stroke: pixel.stroke,
-        }
+        this.pixelToPaint = pixel
       }
     },
     clearPixelToPaint() {
@@ -73,6 +94,9 @@ export const useStore = defineStore('player', {
     },
     selectColor(color: string) {
       this.selectedColor = color
+      if (this.pixelToPaint) {
+        this.pixelToPaint.fill = color
+      }
     },
     notify(payload: any) {
       const app = (this as any).app
@@ -151,6 +175,7 @@ export const useStore = defineStore('player', {
       if (request.error) {
         this.setError(ErrorKey.getLeaderboardInfo, request.error)
       } else {
+        console.log('leaderboard', request.players.players)
         this.clearError(ErrorKey.getLeaderboardInfo)
         return {
           result: request.players.players,
@@ -170,20 +195,12 @@ export const useStore = defineStore('player', {
         this.setError(ErrorKey.info, request.error)
       } else {
         this.clearError(ErrorKey.info)
-        const { key, username, score, color } = request.player
+        const { key, username, score, color, palette } = request.player
+        console.log(request)
         this.id = key
         this.username = username
         this.score = score
-        this.palettePoints = {
-          0: 5000,
-          1: 0,
-          2: 0,
-          3: 0,
-          4: 0,
-          5: 0,
-          6: 0,
-          7: 5000,
-        }
+        this.palettePoints = palette
         this.color = color
         if (request.lastInteractionIn) {
           this.interactionIn = request.lastInteractionIn

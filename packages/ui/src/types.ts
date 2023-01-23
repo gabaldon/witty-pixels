@@ -11,6 +11,12 @@ export type Pixel = {
   strokeWidth: number | null
   stroke: string
 }
+export type PixelDB = {
+  x: number
+  y: number
+  c: number
+  o: string
+}
 export type GeneratePixelArgs = {
   x: number
   y: number
@@ -37,6 +43,9 @@ export type Coordinates = {
 }
 export interface Colors {
   [key: number]: string
+}
+export interface ColorFromHex {
+  [key: string]: number
 }
 export interface PalettePoints {
   [key: number]: number
@@ -67,6 +76,8 @@ export enum ErrorKey {
   network = 'network',
   getContractArgs = 'getContractArgs',
   redeem = 'redeem',
+  canvas = 'canvas',
+  paint = 'paint',
 }
 export enum InteractionType {
   interactionOut = 'interactionOut',
@@ -82,8 +93,5 @@ export enum GameOverErrorKey {
   web3ErrorSwitchingNetworks = 'web3ErrorSwitchingNetworks',
 }
 export interface Errors {
-  [key: string]: string | null
-}
-export interface GameOverErrors {
   [key: string]: string | null
 }

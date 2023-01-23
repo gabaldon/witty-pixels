@@ -60,12 +60,16 @@ export default {
 
     const palette = computed(() => store.palettePoints)
     const colors = computed(() => {
-      return Object.keys(COLORS).map(key => {
-        return {
-          points: palette.value[key] ?? 0,
-          color: COLORS[key],
-        }
-      })
+      return Object.keys(COLORS)
+        .map(key => {
+          if (key !== '0') {
+            return {
+              points: palette.value[key] ?? 0,
+              color: COLORS[key],
+            }
+          }
+        })
+        .filter(value => !!value)
     })
     const pixelToPaint = computed(() => store.pixelToPaint)
     function paintPixel() {
@@ -120,7 +124,7 @@ export default {
       justify-content: space-between;
       .coordinates {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: max-content max-content;
         width: 70px;
         grid-gap: 4px;
       }

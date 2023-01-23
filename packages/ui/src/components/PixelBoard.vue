@@ -9,8 +9,9 @@
       <v-layer ref="layer">
         <v-rect
           v-for="pixel in pixelList"
-          :ref="`${pixel.x}:${pixel.y}`"
-          :key="`${pixel.x}:${pixel.y}`"
+          :active="isActive(pixel)"
+          :ref="pixel.id"
+          :key="pixel.id"
           :config="pixel"
           @click="previewPixelAndShowPanel({ x: pixel.x, y: pixel.y })"
           @tap="previewPixelAndShowPanel({ x: pixel.x, y: pixel.y })"
@@ -28,8 +29,8 @@
 <script lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from '@/stores/player'
-import type { Pixel, Coordinates, GeneratePixelArgs } from '@/types'
-import { CANVAS_WIDTH, CANVAS_HEIGHT, PIXEL_SIZE, SCALE_BY } from '@/constants'
+import type { Pixel, Coordinates, GeneratePixelArgs, PixelDB } from '@/types'
+import { PIXEL_SIZE, SCALE_BY, COLORS } from '@/constants'
 export default {
   setup() {
     const store = useStore()
@@ -38,8 +39,7 @@ export default {
     const targetBoard = ref()
     let configKonva = ref({})
 
-    onMounted(() => {
-      drawGrid()
+    onMounted(async () => {
       configKonva.value = {
         width: targetBoard.value.clientWidth,
         height: targetBoard.value.clientHeight,
@@ -49,9 +49,6 @@ export default {
 
     const selectedColor = computed(() => {
       return store.selectedColor
-    })
-    const pixelMap = computed(() => {
-      return store.pixelMap
     })
     const pixelToPaint = computed(() => {
       return store.pixelToPaint
@@ -63,31 +60,17 @@ export default {
       return stage.value.getStage().container()
     })
     const pixelList = computed(() => {
-      return pixelMap.value ? Object.values(pixelMap.value) : []
-    })
-
-    function drawGrid() {
-      for (
-        let xCell = 0;
-        xCell < Math.round(CANVAS_WIDTH / PIXEL_SIZE);
-        xCell++
-      ) {
-        for (
-          let yCell = 0;
-          yCell < Math.round(CANVAS_HEIGHT / PIXEL_SIZE);
-          yCell++
-        ) {
-          const x = xCell * PIXEL_SIZE
-          const y = yCell * PIXEL_SIZE
-          store.pixelMap[generateId({ x, y })] = generatePixel({
-            x,
-            y,
-            color: 'white',
-            strokeColor: '#8a8a8a3d',
+      return store.pixelMap?.flatMap((pixels: Array<PixelDB>) => {
+        return pixels.map((pixel: PixelDB) => {
+          return generatePixel({
+            x: pixel.x * PIXEL_SIZE,
+            y: pixel.y * PIXEL_SIZE,
+            color: COLORS[pixel.c],
+            strokeColor: pixel.c !== 0 ? COLORS[pixel.c] : '#8a8a8a3d',
           })
-        }
-      }
-    }
+        })
+      })
+    })
     function generateId({ x, y }: Coordinates): string {
       return `${x}:${y}`
     }
@@ -98,7 +81,7 @@ export default {
       strokeColor = color,
     }: GeneratePixelArgs): Pixel {
       return {
-        id: generateId({ x, y }),
+        id: generateId({ x: x, y: y }),
         author: null,
         timestamp: null,
         x: x,
@@ -134,6 +117,12 @@ export default {
       }
       stageContainer.value.style.cursor = 'pointer'
     }
+    function isActive(pixel: Pixel) {
+      return (
+        pixel.fill ===
+        COLORS[store.pixelMap[pixel.x / PIXEL_SIZE][pixel.y / PIXEL_SIZE]?.c]
+      )
+    }
     function clearPixelToPaint() {
       store.clearPixelToPaint()
       store.togglePalettePanel(false)
@@ -167,7 +156,6 @@ export default {
     return {
       pixel,
       configKonva,
-      pixelMap,
       previewPixel,
       pixelToPaint,
       stage,
@@ -178,6 +166,8 @@ export default {
       previewPixelAndShowPanel,
       showPanel,
       pixelList,
+      isActive,
+      generatePixel,
     }
   },
 }

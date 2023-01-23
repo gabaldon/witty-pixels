@@ -79,6 +79,7 @@ export default {
     onMounted(() => {
       playerInfoPoller = setInterval(async () => {
         await player.getPlayerInfo()
+        await player.getPixelMap()
       }, POLLER_MILLISECONDS)
     })
     onBeforeUnmount(() => {

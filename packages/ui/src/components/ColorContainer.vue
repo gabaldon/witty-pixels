@@ -26,7 +26,7 @@ export default {
     },
     color: {
       type: String,
-      default: 'lightgrey',
+      default: 'white',
     },
   },
   setup() {

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ApiService } from '@/api'
 import { useLocalStore } from './local'
 import { isMainnetTime } from '@/utils'
-import type { TokenStatus, GameOverErrors, GameOverErrorKey } from '@/types'
+import type { TokenStatus, Errors, GameOverErrorKey } from '@/types'
 import { TIME_TO_REDEEM_MILLISECONDS, GAME_ENDS_TIMESTAMP } from '../constants'
 
 export const useGameStore = defineStore('gameStore', {
@@ -16,7 +16,7 @@ export const useGameStore = defineStore('gameStore', {
     tokenStatus: 'Minting' as TokenStatus | null,
     mintParams: null,
     tokenIds: null,
-    errors: {} as GameOverErrors,
+    errors: {} as Errors,
   }),
   getters: {
     isGameOver(): boolean {
