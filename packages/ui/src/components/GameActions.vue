@@ -85,7 +85,8 @@ export default {
     const web3WrongNetwork = computed(() => {
       return (
         gameStore.redeemAllow &&
-        gameStore.errors.web3WrongNetwork &&
+        (gameStore.errors.web3WrongNetwork ||
+          gameStore.errors.web3ErrorSwitchingNetworks) &&
         !minted.value
       )
     })

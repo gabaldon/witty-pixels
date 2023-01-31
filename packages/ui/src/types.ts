@@ -18,6 +18,10 @@ export type PixelDB = {
   o: string
   t: number
 }
+export type Provider = {
+  network: string
+  address: string
+}
 export enum ColorHexMap {
   white = 'white',
   black = 'black',
@@ -54,6 +58,14 @@ export type Coordinates = {
 }
 export interface ColorsFromIndex {
   [key: number]: string
+}
+export interface NetworkMap {
+  [key: number]: {
+    name: string
+    id: number
+    contractAddress?: string
+    rpcUrls?: Array<string>
+  }
 }
 export interface ColorFromHex {
   [key: string]: number

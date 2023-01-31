@@ -7,9 +7,10 @@
       <div class="float">
         <div class="game-info">
           <GameOverCountdown />
-          <GameInfo
-            ><p>@{{ player.username }}</p></GameInfo
+          <GameInfo>
+            <p>@{{ player.username }}</p></GameInfo
           >
+          <ProviderConnected />
         </div>
         <MintInformation />
       </div>
@@ -93,6 +94,7 @@ export default {
     margin: 16px;
     display: grid;
     grid-template-rows: max-content max-content;
+    grid-template-columns: 1fr;
     grid-gap: 8px;
     justify-content: space-between;
     grid-template-rows: 1fr;

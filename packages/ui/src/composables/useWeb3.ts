@@ -47,6 +47,22 @@ export function useWeb3() {
   onMounted(() => {
     if (window.ethereum) {
       web3 = new Web3(window.ethereum || 'ws://localhost:8545')
+      // detect account change
+      window.ethereum.on('accountsChanged', (accounts: any) => {
+        enableProvider()
+        gameStore.setProvider({
+          network: gameStore.provider.network,
+          address: accounts[0],
+        })
+      })
+      // detect network change
+      window.ethereum.on('chainChanged', (networkId: any) => {
+        enableProvider()
+        gameStore.setProvider({
+          network: NETWORKS[networkId]?.name ?? 'wrong network',
+          address: gameStore.provider.address,
+        })
+      })
     }
   })
 
@@ -65,7 +81,12 @@ export function useWeb3() {
       }
       if (accounts[0]) {
         isProviderConnected.value = true
-        if ((await web3.eth.net.getId()) !== Number(network.value?.id)) {
+        const currentProvider: number = await web3.eth.net.getId()
+        gameStore.setProvider({
+          network: NETWORKS[currentProvider]?.name ?? 'wrong network',
+          address: accounts[0],
+        })
+        if (currentProvider !== Number(network.value?.id)) {
           gameStore.setError(
             GameOverErrorKey.web3WrongNetwork,
             createErrorMessage(errorNetworkMessage)
@@ -88,37 +109,60 @@ export function useWeb3() {
   }
 
   async function addNetwork() {
-    gameStore.clearError(GameOverErrorKey.web3WrongNetwork)
-    gameStore.clearError(GameOverErrorKey.web3Disconnected)
-    isProviderConnected.value = true
-    await window.ethereum
-      .request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: web3.utils.toHex(network.value.id) }],
-      })
-      .catch(async (error: any) => {
-        if (error.code === 4902) {
-          await window.ethereum
-            .request({
-              method: 'wallet_addEthereumChain',
-              params: [
-                {
-                  chainId: web3.utils.toHex(network.value.id),
-                  chainName: network.value.name,
-                  rpcUrls: network.value.rpcUrls,
-                  blockExplorerUrls: network.value.rpcUrls,
-                },
-              ],
+    if (web3) {
+      let accounts: Array<string>
+      try {
+        accounts = await requestAccounts(web3)
+        isProviderConnected.value = true
+        await window.ethereum
+          .request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: web3.utils.toHex(network.value.id) }],
+          })
+          .then(() => {
+            gameStore.clearError(GameOverErrorKey.web3WrongNetwork)
+            gameStore.clearError(GameOverErrorKey.web3Disconnected)
+          })
+          .catch(async (error: any) => {
+            console.log('Error switching networks', error)
+            const currentProvider: number = await web3.eth.net.getId()
+            gameStore.setProvider({
+              network: NETWORKS[currentProvider]?.name ?? 'wrong network',
+              address: accounts[0],
             })
-            .catch((error: any) => {
-              console.log(error)
-              return gameStore.setError(
-                GameOverErrorKey.web3ErrorSwitchingNetworks,
-                createErrorMessage(errorNetworkMessage)
-              )
-            })
-        }
-      })
+            gameStore.setError(
+              GameOverErrorKey.web3ErrorSwitchingNetworks,
+              createErrorMessage(errorNetworkMessage)
+            )
+            if (error.code === 4902) {
+              await window.ethereum
+                .request({
+                  method: 'wallet_addEthereumChain',
+                  params: [
+                    {
+                      chainId: web3.utils.toHex(network.value.id),
+                      chainName: network.value.name,
+                      rpcUrls: network.value.rpcUrls,
+                      blockExplorerUrls: network.value.rpcUrls,
+                    },
+                  ],
+                })
+                .catch((error: any) => {
+                  console.log('Error adding network', error)
+                  return gameStore.setError(
+                    GameOverErrorKey.web3ErrorSwitchingNetworks,
+                    createErrorMessage(errorNetworkMessage)
+                  )
+                })
+            }
+          })
+      } catch (err) {
+        gameStore.setError(
+          GameOverErrorKey.web3Disconnected,
+          createErrorMessage(errorWeb3Disconnected)
+        )
+      }
+    }
   }
 
   async function getTokenStatus() {
