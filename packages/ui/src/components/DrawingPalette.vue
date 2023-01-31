@@ -16,7 +16,7 @@
             </p>
           </div>
           <p class="light-text time">
-            {{ formatDistanceToNow(pixelToPaint?.timestamp) }}
+            {{ formatDistanceToNow(pixelToPaint?.t) }}
           </p>
         </div>
         <p v-if="pixelToPaint?.author" class="dark-text">
@@ -62,7 +62,7 @@ export default {
     const colors = computed(() => {
       return Object.keys(COLORS)
         .map(key => {
-          if (key !== '0') {
+          if (key !== '0' && key !== '1') {
             return {
               points: palette.value[key] ?? 0,
               color: COLORS[key],
@@ -76,6 +76,7 @@ export default {
       store.paintPixel()
     }
     function closePanel() {
+      store.clearPixelToPaint()
       store.togglePalettePanel(false)
     }
     return {

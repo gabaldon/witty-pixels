@@ -9,7 +9,8 @@ import {
   type InteractionInfo,
   ErrorKey,
 } from '@/types'
-import { COLORS, PIXEL_SIZE, COLOR_FROM_HEX } from '@/constants'
+import { COLORS, COLOR_FROM_HEX } from '@/constants'
+import { standardizePixelCoordinates } from '@/utils'
 import { useLocalStore } from './local'
 export const useStore = defineStore('player', {
   state: () => {
@@ -19,7 +20,7 @@ export const useStore = defineStore('player', {
       id: null,
       username: '',
       score: null,
-      color: 0 as number,
+      color: 7 as number,
       bonus: null,
       interactionInfo: null,
       interactionIn: null as InteractionInfo | null,
@@ -54,32 +55,33 @@ export const useStore = defineStore('player', {
       if (this.pixelToPaint && this.selectedColor) {
         const tokenInfo = this.localStore.getToken()
         const request = await this.api.drawPixel({
-          x: this.pixelToPaint.x / PIXEL_SIZE,
-          y: this.pixelToPaint.y / PIXEL_SIZE,
-          color: COLOR_FROM_HEX[this.pixelToPaint.fill],
+          x: standardizePixelCoordinates(this.pixelToPaint.x),
+          y: standardizePixelCoordinates(this.pixelToPaint.y),
+          color: this.selectedColor
+            ? COLOR_FROM_HEX[this.selectedColor]
+            : COLOR_FROM_HEX[this.pixelToPaint.fill],
           token: tokenInfo.token,
         })
-        console.log('paint pixel!!', request)
         if (request.error) {
           this.setError(ErrorKey.paint, request.error)
         } else {
           this.pixelMap[request.x][request.y] = request
-          console.log('updatedPixel', this.pixelMap[request.x][request.y])
           this.clearError(ErrorKey.paint)
         }
       }
     },
     setPixelToPaint(pixel: Pixel) {
-      const pixelFromMap = this.pixelMap[pixel.x / PIXEL_SIZE]
-        ? this.pixelMap[pixel.x / PIXEL_SIZE][pixel.y / PIXEL_SIZE]
+      const pixelFromMap = this.pixelMap[standardizePixelCoordinates(pixel.x)]
+        ? this.pixelMap[standardizePixelCoordinates(pixel.x)][
+            standardizePixelCoordinates(pixel.y)
+          ]
         : null
       if (this.pixelMap && pixelFromMap?.o) {
-        if (this.pixelMap) {
-          this.pixelToPaint = {
-            ...pixel,
-            author: pixelFromMap?.o,
-            fill: COLORS[pixelFromMap.c],
-          }
+        this.pixelToPaint = {
+          ...pixel,
+          timestamp: pixelFromMap?.t,
+          author: pixelFromMap?.o,
+          fill: COLORS[pixelFromMap.c],
         }
       } else {
         this.pixelToPaint = pixel
@@ -175,7 +177,6 @@ export const useStore = defineStore('player', {
       if (request.error) {
         this.setError(ErrorKey.getLeaderboardInfo, request.error)
       } else {
-        console.log('leaderboard', request.players.players)
         this.clearError(ErrorKey.getLeaderboardInfo)
         return {
           result: request.players.players,
@@ -196,7 +197,6 @@ export const useStore = defineStore('player', {
       } else {
         this.clearError(ErrorKey.info)
         const { key, username, score, color, palette } = request.player
-        console.log(request)
         this.id = key
         this.username = username
         this.score = score

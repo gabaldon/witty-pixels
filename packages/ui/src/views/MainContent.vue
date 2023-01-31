@@ -24,16 +24,6 @@
       </PanelSlider>
     </template>
   </MainLayout>
-
-  <ModalDialog
-    :show="modalStore.modal.visible"
-    v-on:close="modalStore.closeModal"
-  >
-    <ModalGameOver v-if="modalStore.modals.gameOver" />
-    <ModalExport v-if="modalStore.modals.export" />
-    <ModalMint v-if="modalStore.modals.mint" />
-    <ModalRedeemInfo v-if="modalStore.modals.redeem" />
-  </ModalDialog>
 </template>
 
 <script>
@@ -41,7 +31,7 @@ import { useStore } from '@/stores/player'
 import { useLocalStore } from '@/stores/local'
 import { useModalStore } from '@/stores/modal'
 import { useGameStore } from '@/stores/game'
-import { ModalKey } from '@/types'
+import { ModalKey, ErrorKey } from '@/types'
 import { onBeforeMount, onMounted, onBeforeUnmount } from 'vue'
 import { POLLER_MILLISECONDS } from '@/constants'
 import { useRouter } from 'vue-router'
@@ -58,7 +48,9 @@ export default {
       const token = await localStore.getToken()
       if (!token) {
         await player.authorize({ key: router.currentRoute.value.params.id })
-        modalStore.openModal(ModalKey.export)
+        if (!player.errors[ErrorKey.auth]) {
+          modalStore.openModal(ModalKey.export)
+        }
       } else {
         await player.getPlayerInfo()
         if (
@@ -86,7 +78,6 @@ export default {
       clearInterval(playerInfoPoller)
     })
     return {
-      modalStore,
       player,
     }
   },

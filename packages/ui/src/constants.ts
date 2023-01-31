@@ -1,4 +1,4 @@
-import type { Colors, ColorFromHex } from '@/types'
+import { type ColorsFromIndex, type ColorFromHex, ColorHexMap } from '@/types'
 
 export const CONTRACT_ADDRESS =
   import.meta.env.VITE_CONTRACT_ADDRESS ||
@@ -33,23 +33,25 @@ export const BASE_URL =
 
 export const ATTRIBUTES = {}
 
-export const COLORS: Colors = {
-  0: 'white',
-  1: 'orange',
-  2: 'yellow',
-  3: 'green',
-  4: 'blue',
-  5: 'red',
-  6: '#8C52FF',
+export const COLORS: ColorsFromIndex = {
+  0: ColorHexMap.white,
+  1: ColorHexMap.black,
+  2: ColorHexMap.orange,
+  3: ColorHexMap.yellow,
+  4: ColorHexMap.green,
+  5: ColorHexMap.blue,
+  6: ColorHexMap.red,
+  7: ColorHexMap.purple,
 }
 export const COLOR_FROM_HEX: ColorFromHex = {
-  white: 0,
-  orange: 1,
-  yellow: 2,
-  green: 3,
-  blue: 4,
-  red: 5,
-  '#8C52FF': 6,
+  [ColorHexMap.white]: 0,
+  [ColorHexMap.black]: 1,
+  [ColorHexMap.orange]: 2,
+  [ColorHexMap.yellow]: 3,
+  [ColorHexMap.green]: 4,
+  [ColorHexMap.blue]: 5,
+  [ColorHexMap.red]: 6,
+  [ColorHexMap.purple]: 7,
 }
 export const TIMEZONE = 'America/Denver'
 export const PIXEL_SIZE = 16

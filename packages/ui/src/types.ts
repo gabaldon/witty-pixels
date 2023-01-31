@@ -16,6 +16,17 @@ export type PixelDB = {
   y: number
   c: number
   o: string
+  t: number
+}
+export enum ColorHexMap {
+  white = 'white',
+  black = 'black',
+  red = '#EA033A',
+  orange = '#FF5730',
+  yellow = '#F5EA0A',
+  green = '#56C553',
+  blue = '#5C96FF',
+  purple = '#8D52FF',
 }
 export type GeneratePixelArgs = {
   x: number
@@ -41,7 +52,7 @@ export type Coordinates = {
   x: number
   y: number
 }
-export interface Colors {
+export interface ColorsFromIndex {
   [key: number]: string
 }
 export interface ColorFromHex {

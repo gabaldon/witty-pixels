@@ -1,7 +1,26 @@
 <template>
   <router-view />
   <GameNotification />
+  <ModalDialog
+    :show="modalStore.modal.visible"
+    v-on:close="modalStore.closeModal"
+  >
+    <ModalGameOver v-if="modalStore.modals.gameOver" />
+    <ModalExport v-if="modalStore.modals.export" />
+    <ModalMint v-if="modalStore.modals.mint" />
+    <ModalRedeemInfo v-if="modalStore.modals.redeem" />
+  </ModalDialog>
 </template>
+
+<script lang="ts">
+import { useModalStore } from '@/stores/modal'
+export default {
+  setup() {
+    const modalStore = useModalStore()
+    return { modalStore }
+  },
+}
+</script>
 
 <style lang="scss">
 #app {

@@ -28,9 +28,11 @@
 
 <script lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { standardizePixelCoordinates } from '@/utils'
 import { useStore } from '@/stores/player'
 import type { Pixel, Coordinates, GeneratePixelArgs, PixelDB } from '@/types'
 import { PIXEL_SIZE, SCALE_BY, COLORS } from '@/constants'
+
 export default {
   setup() {
     const store = useStore()
@@ -62,6 +64,7 @@ export default {
     const pixelList = computed(() => {
       return store.pixelMap?.flatMap((pixels: Array<PixelDB>) => {
         return pixels.map((pixel: PixelDB) => {
+          // Scale pixel size to improve pixel visibility
           return generatePixel({
             x: pixel.x * PIXEL_SIZE,
             y: pixel.y * PIXEL_SIZE,
@@ -120,7 +123,11 @@ export default {
     function isActive(pixel: Pixel) {
       return (
         pixel.fill ===
-        COLORS[store.pixelMap[pixel.x / PIXEL_SIZE][pixel.y / PIXEL_SIZE]?.c]
+        COLORS[
+          store.pixelMap[standardizePixelCoordinates(pixel.x)][
+            standardizePixelCoordinates(pixel.y)
+          ]?.c
+        ]
       )
     }
     function clearPixelToPaint() {
