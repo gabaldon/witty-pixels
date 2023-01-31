@@ -18,36 +18,46 @@
   </div>
   <div class="btn" v-if="gameStore.gameOver">
     <CustomButton
-      v-if="!gameStore.redeemAllow && !minted"
-      type="disable"
-      :slim="true"
-    >
-      <p class="disabled-text">
-        Allowing redeem in
-        <TimeLeft
-          class="time-left"
-          :timestamp="gameStore.timeToRedeemInMilli"
-          :seconds="true"
-          @clear-timestamp="allowRedeem"
-        />...
-      </p>
-    </CustomButton>
-    <CustomButton
       v-if="web3WrongNetwork"
       @click="addNetwork()"
       type="dark"
       :slim="true"
     >
-      Switch to Polygon Network
+      Switch to {{ NETWORKS[CURRENT_NETWORK].name }}
     </CustomButton>
     <CustomButton
-      v-else-if="redeemEnabled"
-      @click="redeem"
-      :type="web3Disconnected ? 'disable' : 'dark'"
+      v-else-if="!gameStore.redeemCountdownOver || fractionalizing"
+      type="disable"
       :slim="true"
     >
-      Redeem ownership
+      <p class="disabled-text">
+        Allowing redeem
+        <span v-if="!gameStore.redeemCountdownOver">
+          in
+          <TimeLeft
+            v-if="!gameStore.redeemCountdownOver"
+            class="time-left"
+            :timestamp="gameStore.timeToRedeemInMilli"
+            :seconds="true"
+            @clear-timestamp="allowRedeem"
+          />
+        </span>
+        ...
+      </p>
     </CustomButton>
+    <CustomButton
+      v-else-if="txType"
+      @click="gameOverAction"
+      :type="web3Disconnected || transactionInProgress ? 'disable' : 'dark'"
+      :slim="true"
+    >
+      {{ transactionInProgress ? txInProgressText : txActionText }}
+    </CustomButton>
+    <a v-else-if="transactionConfirmed" :href="marketplaceUrl">
+      <CustomButton :type="web3Disconnected ? 'disable' : 'dark'" :slim="true">
+        Check on {{ marketplaceName }}
+      </CustomButton>
+    </a>
   </div>
 </template>
 
@@ -56,134 +66,194 @@ import { useStore } from '@/stores/player'
 import { useLocalStore } from '@/stores/local'
 import { useGameStore } from '@/stores/game'
 import { useModalStore } from '@/stores/modal'
-import { ModalKey, TokenStatus, InteractionType } from '@/types'
+import {
+  ModalKey,
+  TxType,
+  GameOverStatus,
+  InteractionType,
+  TokenStatus,
+} from '@/types'
 import { useWeb3 } from '@/composables/useWeb3'
-import { POLLER_MILLISECONDS } from '@/constants.js'
+import {
+  POLLER_MILLISECONDS,
+  NETWORKS,
+  CURRENT_NETWORK,
+  ERC721_ADDRESS,
+  ERC721_TOKEN_ID,
+} from '@/constants.js'
 import { onMounted, onBeforeUnmount, computed, watch } from 'vue'
 export default {
   setup(_props) {
-    //TODO: refactor
     let tokenStatusPoller: any
-    let mintConfirmationStatusPoller: any
+    let txConfirmationStatusPoller: any
+
     const player = useStore()
     const localStore = useLocalStore()
     const modalStore = useModalStore()
     const gameStore = useGameStore()
     const web3WittyPixels = useWeb3()
-    const minted = computed(() => {
-      return !!localStore.mintInfo?.txHash
-    })
+
+    const actionText: Record<TxType, string> = {
+      [TxType.Redeem]: 'Redeem ownership',
+      [TxType.Buy]: 'Buy NFT',
+      [TxType.Withdraw]: 'Withdraw',
+    }
+
+    const inProgressText: Record<TxType, string> = {
+      [TxType.Redeem]: 'Redeeming...',
+      [TxType.Buy]: 'Buying...',
+      [TxType.Withdraw]: 'Withdrawing...',
+    }
+
     const gameOver = computed(() => gameStore.gameOver)
-    const txHash = computed(() => localStore.mintInfo?.txHash)
-    const web3Disconnected = computed(() => {
-      return (
-        gameStore.redeemAllow &&
-        !web3WittyPixels.isProviderConnected.value &&
-        !minted.value
-      )
-    })
-    const web3WrongNetwork = computed(() => {
-      return (
-        gameStore.redeemAllow &&
-        (gameStore.errors.web3WrongNetwork ||
-          gameStore.errors.web3ErrorSwitchingNetworks) &&
-        !minted.value
-      )
-    })
-    const redeemEnabled = computed(() => {
-      return gameStore.redeemAllow && !minted.value
-    })
-    const tokenVaultStatus = computed(() => gameStore.tokenStatus)
+    const gameOverStatus = computed(() => gameStore.gameOverStatus)
+    // const tokenStatus = computed(() => gameStore.tokenStatus)
     const type = computed(() => (player.interactionOut ? 'disable' : 'dark'))
-    const tokenStatus = computed(() => gameStore?.tokenStatus)
-    const redeemConfirmation = computed(
-      () => localStore.mintInfo?.mintConfirmation
+    const transactionError = computed(() => gameStore.errors.transaction)
+    const transactionInProgress = computed(
+      () =>
+        localStore.txInfo?.txHash &&
+        !transactionConfirmed.value &&
+        !transactionError.value
     )
+    const transactionConfirmed = computed(
+      () =>
+        localStore.txInfo?.txConfirmation ||
+        localStore.txInfo?.externalConfirmation
+    )
+    const redeemCountdownOver = computed(() => gameStore.redeemCountdownOver)
+    const web3Disconnected = computed(() => gameStore.errors.web3Disconnected)
+    const web3WrongNetwork = computed(() => gameStore.errors.web3WrongNetwork)
+    const txType = computed(() => localStore.txInfo?.txType)
+    const txActionText = computed(() =>
+      txType.value ? actionText[txType.value] : ''
+    )
+    const txInProgressText = computed(() =>
+      txType.value ? inProgressText[txType.value] : ''
+    )
+    const marketplaceUrl = computed(
+      () =>
+        `${NETWORKS[CURRENT_NETWORK].marketplace}/${ERC721_ADDRESS}/${ERC721_TOKEN_ID}`
+    )
+    const marketplaceName = computed(() => NETWORKS[CURRENT_NETWORK])
+    const fractionalizing = computed(() => {
+      return (
+        gameStore.gameOverStatus == GameOverStatus.Fractionalizing ||
+        gameStore.tokenStatus == TokenStatus.Minting
+      )
+    })
+
     onBeforeUnmount(() => {
-      clearInterval(tokenStatusPoller)
-      clearInterval(mintConfirmationStatusPoller)
+      clearPollers()
     })
     onMounted(async () => {
       await player.getPlayerInfo()
-      if (gameStore.gameOver) {
-        tokenStatusPoller = await setInterval(async () => {
-          await web3WittyPixels.getTokenStatus()
-        }, POLLER_MILLISECONDS)
-      }
-      if (tokenVaultStatus.value == TokenStatus.Fractionalized) {
-        connectWeb3()
-      }
-    })
-    watch(gameOver, () => {
-      getTokenStatus()
-    })
-    watch(tokenStatus, () => {
-      getGameOverInfo()
-    })
-    watch(txHash, () => {
-      getGameOverInfo()
-    })
-    watch(redeemConfirmation, () => {
-      getGameOverInfo()
-    })
-    watch(tokenVaultStatus, value => {
-      if (value == TokenStatus.Fractionalized) {
-        connectWeb3()
-      }
-    })
-    const getTokenStatus = async () => {
-      if (gameStore.isGameOver) {
-        gameStore.gameOver = true
+      if (redeemCountdownOver.value) {
+        startTokenStatusPoller()
+      } else if (gameOver.value) {
         modalStore.openModal(ModalKey.gameOver)
-        await web3WittyPixels.getTokenStatus()
-        tokenStatusPoller = setInterval(async () => {
-          await web3WittyPixels.getTokenStatus()
-        }, POLLER_MILLISECONDS)
       }
-    }
-    const getGameOverInfo = async () => {
-      clearInterval(mintConfirmationStatusPoller)
+    })
+
+    watch(web3Disconnected, value => {
+      if (value) {
+        clearPollers()
+      } else if (redeemCountdownOver.value) {
+        console.log('start on web3 connect')
+        startTokenStatusPoller()
+      }
+    })
+
+    watch(web3WrongNetwork, value => {
+      if (value) {
+        clearPollers()
+      } else if (redeemCountdownOver.value) {
+        startTokenStatusPoller()
+      }
+    })
+
+    watch(gameOverStatus, value => {
+      if (value == GameOverStatus.AllowRedeem) {
+        modalStore.openModal(ModalKey.redeem)
+        localStore.saveTxInfo({ txType: TxType.Redeem })
+      } else if (value == GameOverStatus.AllowSale) {
+        localStore.saveTxInfo({ txType: TxType.Buy })
+      } else if (value == GameOverStatus.AllowWithdraw) {
+        localStore.saveTxInfo({ txType: TxType.Withdraw })
+      }
+    })
+
+    watch(gameOver, value => {
+      if (value) {
+        modalStore.openModal(ModalKey.gameOver)
+      }
+    })
+
+    watch(redeemCountdownOver, value => {
+      if (value) {
+        startTokenStatusPoller()
+      }
+    })
+
+    async function startTokenStatusPoller() {
+      await web3WittyPixels.enableProvider()
       if (
-        localStore.mintInfo?.txHash &&
-        !localStore.mintInfo?.mintConfirmation
+        !tokenStatusPoller &&
+        !web3Disconnected.value &&
+        !web3WrongNetwork.value
       ) {
-        mintConfirmationStatusPoller = await setInterval(async () => {
-          await web3WittyPixels.getConfirmationStatus()
+        // start polling when provider is the correct one
+        tokenStatusPoller = await setInterval(async () => {
+          await web3WittyPixels.checkTokenStatus()
         }, POLLER_MILLISECONDS)
       }
     }
+
     const clearTimestamp = (interactionType: InteractionType) => {
       player[interactionType] = null
     }
     function allowRedeem() {
-      gameStore.redeemAllow = true
-      modalStore.openModal(ModalKey.redeem)
-    }
-    function connectWeb3() {
-      web3WittyPixels.enableProvider()
+      gameStore.redeemCountdownOver = true
     }
     function addNetwork() {
       web3WittyPixels.addNetwork()
     }
-    function redeem() {
-      if (type.value !== 'disable') {
-        // TODO: CALL REDEEM
+    function clearPollers() {
+      clearInterval(tokenStatusPoller)
+      clearInterval(txConfirmationStatusPoller)
+      tokenStatusPoller = null
+      txConfirmationStatusPoller = null
+    }
+    function gameOverAction() {
+      if (txType.value == TxType.Redeem) {
+        web3WittyPixels.redeemOwnership()
+      } else if (txType.value == TxType.Buy) {
+        web3WittyPixels.buyNFT()
+      } else if (txType.value == TxType.Withdraw) {
+        web3WittyPixels.withdrawNFTOwnership()
       }
     }
     return {
-      redeem,
+      gameOverAction,
       player,
-      minted,
       type,
-      connectWeb3,
       clearTimestamp,
       addNetwork,
       allowRedeem,
       gameStore,
       web3Disconnected,
       web3WrongNetwork,
-      redeemEnabled,
       InteractionType,
+      NETWORKS,
+      CURRENT_NETWORK,
+      transactionConfirmed,
+      transactionInProgress,
+      txType,
+      txActionText,
+      txInProgressText,
+      marketplaceUrl,
+      marketplaceName,
+      fractionalizing,
     }
   },
 }

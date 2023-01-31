@@ -18,6 +18,7 @@ export const useStore = defineStore('player', {
       api: new ApiService(),
       localStore: useLocalStore(),
       id: null,
+      creationIndex: null as number | null,
       username: '',
       score: null,
       color: 7 as number,
@@ -196,12 +197,14 @@ export const useStore = defineStore('player', {
         this.setError(ErrorKey.info, request.error)
       } else {
         this.clearError(ErrorKey.info)
-        const { key, username, score, color, palette } = request.player
+        const { key, username, score, color, palette, creationIndex } =
+          request.player
         this.id = key
         this.username = username
         this.score = score
         this.palettePoints = palette
         this.color = color
+        this.creationIndex = creationIndex
         if (request.lastInteractionIn) {
           this.interactionIn = request.lastInteractionIn
         }

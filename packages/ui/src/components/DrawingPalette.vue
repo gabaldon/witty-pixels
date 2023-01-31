@@ -16,7 +16,7 @@
             </p>
           </div>
           <p class="light-text time">
-            {{ formatDistanceToNow(pixelToPaint?.t) }}
+            {{ formatDistanceToNow(pixelToPaint?.timestamp) }}
           </p>
         </div>
         <p v-if="pixelToPaint?.author" class="dark-text">

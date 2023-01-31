@@ -5,9 +5,9 @@ import {
   ColorHexMap,
 } from '@/types'
 
-export const CONTRACT_ADDRESS =
-  import.meta.env.VITE_CONTRACT_ADDRESS ||
-  '0xE41D6D1cFe55A0fc2035dD663D873D15f21d93c2'
+export const ERC721_ADDRESS =
+  import.meta.env.VITE_ERC721_ADDRESS ||
+  '0xc0ffee3c6F66dE5a0adcCEc65Dc6bB20C8C6A454'
 
 export const OPENSEA_BASE_URL =
   import.meta.env.VITE_OPENSEA_BASE_URL ||
@@ -20,9 +20,12 @@ export const NETWORKS: NetworkMap = {
   137: {
     name: 'Polygon Mainnet',
     id: 137,
-    contractAddress:
-      import.meta.env.VITE_POLYGON_MAINNET_CONTRACT_ADDRESS || '0x00',
-    rpcUrls: ['https://polygon-rpc.com'],
+    contractAddress: import.meta.env.VITE_POLYGON_MAINNET_CONTRACT_ADDRESS,
+    rpcUrls: ['https://polygon-rpc.com/'],
+    blockExplorerUrls: ['https://polygonscan.com'],
+    marketplace: 'https://opensea.io/assets/matic',
+    marketplaceName: 'OpenSea',
+    confirmationCount: 3,
   },
   1030: {
     name: 'Conflux eSpace Mainnet',
@@ -83,10 +86,20 @@ export const NETWORKS: NetworkMap = {
   80001: {
     name: 'Polygon Mumbai',
     id: 80001,
+    contractAddress: import.meta.env.VITE_POLYGON_MUMBAI_CONTRACT_ADDRESS,
+    rpcUrls: ['https://rpc-mumbai.maticvigil.com'],
+    blockExplorerUrls: ['https://mumbai.polygonscan.com'],
+    marketplace: 'https://testnets.opensea.io/assets/mumbai',
+    marketplaceName: 'OpenSea',
+    confirmationCount: 3,
   },
 }
 
-export const CURRENT_NETWORK = 137
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+export const ERC721_TOKEN_ID = 1
+
+export const CURRENT_NETWORK = 80001
 
 export const VITE_TEST = import.meta.env.VITE_TEST || false
 

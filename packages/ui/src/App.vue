@@ -7,7 +7,6 @@
   >
     <ModalGameOver v-if="modalStore.modals.gameOver" />
     <ModalExport v-if="modalStore.modals.export" />
-    <ModalMint v-if="modalStore.modals.mint" />
     <ModalRedeemInfo v-if="modalStore.modals.redeem" />
   </ModalDialog>
 </template>

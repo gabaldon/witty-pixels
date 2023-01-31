@@ -63,9 +63,6 @@ export default {
         }
         if (gameStore.gameOver) {
           await localStore.getMintInfo()
-          if (localStore.minted) {
-            // TODO: get token info
-          }
         }
       }
     })

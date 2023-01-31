@@ -1,5 +1,5 @@
 <template>
-  <GameInfo v-if="gameStore.redeemAllow" class="provider-container">
+  <GameInfo v-if="gameStore.redeemCountdownOver" class="provider-container">
     <p>
       {{ network ? `Connected to ${network}` : 'No web3 provider connected' }}
     </p>
