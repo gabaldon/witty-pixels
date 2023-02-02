@@ -2,6 +2,7 @@ import {
   type ColorsFromIndex,
   type ColorFromHex,
   type NetworkMap,
+  TokenStatus,
   ColorHexMap,
 } from '@/types'
 
@@ -131,6 +132,13 @@ export const COLOR_FROM_HEX: ColorFromHex = {
   [ColorHexMap.red]: 6,
   [ColorHexMap.purple]: 7,
 }
+export const TOKEN_STATUS: Record<number, TokenStatus> = {
+  0: TokenStatus.Void,
+  1: TokenStatus.Launching,
+  2: TokenStatus.Minting,
+  3: TokenStatus.Fractionalized,
+  4: TokenStatus.SoldOut,
+}
 export const TIMEZONE = 'America/Denver'
 export const PIXEL_SIZE = 16
 export const CANVAS_WIDTH = 1000
@@ -146,9 +154,11 @@ export const TIME_TO_REDEEM_MILLISECONDS = import.meta.env
   ? parseInt(import.meta.env.VITE_TIME_TO_REDEEM_MILLISECONDS)
   : 60000
 
-export const GAME_ENDS_TIMESTAMP = import.meta.env.VITE_GAME_ENDS_TIMESTAMP
-  ? parseInt(import.meta.env.VITE_GAME_ENDS_TIMESTAMP)
-  : 1677891600000 // Fri, 3 March 2023 18:00 GMT-7,
+export const GAME_ENDS_TIMESTAMP = new Date().getTime() + 6000
+
+// export const GAME_ENDS_TIMESTAMP = import.meta.env.VITE_GAME_ENDS_TIMESTAMP
+//   ? parseInt(import.meta.env.VITE_GAME_ENDS_TIMESTAMP)
+//   : 1677891600000 // Fri, 3 March 2023 18:00 GMT-7,
 
 export const PLAYER_MAINNET_TIMESTAMP = import.meta.env.PLAYER_MAINNET_TIMESTAMP
   ? parseInt(import.meta.env.VITE_PLAYER_MAINNET_TIMESTAMP)

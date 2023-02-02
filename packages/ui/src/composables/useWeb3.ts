@@ -10,6 +10,7 @@ import {
   NETWORKS,
   CURRENT_NETWORK,
   ZERO_ADDRESS,
+  TOKEN_STATUS,
 } from '../constants'
 import {
   GameOverErrorKey,
@@ -86,7 +87,6 @@ export function useWeb3() {
   })
 
   async function enableProvider() {
-    console.log('enable provider!!')
     gameStore.clearError(GameOverErrorKey.web3WrongNetwork)
     gameStore.clearError(GameOverErrorKey.web3Disconnected)
     if (web3) {
@@ -208,12 +208,10 @@ export function useWeb3() {
   }
 
   async function checkTokenStatus() {
-    console.log('checkTokenstatus')
     try {
       const result = await erc721Contract.methods
         .getTokenStatus(ERC721_TOKEN_ID)
         .call()
-      console.log('tokenStatus', result)
       if (
         result == TokenStatus.Fractionalized ||
         result == TokenStatus.SoldOut
@@ -228,7 +226,7 @@ export function useWeb3() {
       } else {
         gameStore.setGameOverStatus(GameOverStatus.Fractionalizing)
       }
-      gameStore.setTokenStatus(result ?? null)
+      gameStore.setTokenStatus(TOKEN_STATUS[result] ?? null)
       if (erc20Contract) {
         const erc20PlayerInfo: RedeemPlayerInfo | null =
           await getRedeemPlayerInfo()

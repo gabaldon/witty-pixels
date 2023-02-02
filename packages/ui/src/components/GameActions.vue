@@ -139,6 +139,7 @@ export default {
     const marketplaceName = computed(() => NETWORKS[CURRENT_NETWORK])
     const fractionalizing = computed(() => {
       return (
+        !gameStore.gameOverStatus ||
         gameStore.gameOverStatus == GameOverStatus.Fractionalizing ||
         gameStore.tokenStatus == TokenStatus.Minting
       )
@@ -208,7 +209,6 @@ export default {
     })
 
     async function startTokenStatusPoller() {
-      console.log()
       await web3WittyPixels.enableProvider()
       if (
         !tokenStatusPoller &&
