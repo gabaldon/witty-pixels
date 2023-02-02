@@ -1,5 +1,5 @@
 <template>
-  <MainLayout>
+  <MainLayout :hideNavBar="player.username ? false : true">
     <template v-slot:main>
       <StreamBarcodeReader class="qr-code" @decode="onDecode" />
       <CustomButton

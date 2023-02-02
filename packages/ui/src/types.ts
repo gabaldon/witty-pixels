@@ -80,6 +80,8 @@ export enum ModalKey {
   preview = 'preview',
   gameOver = 'gameOver',
   redeem = 'redeem',
+  txConfirmation = 'txConfirmation',
+  txError = 'txError',
 }
 export interface Modals {
   [key: string]: boolean | null

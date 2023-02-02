@@ -17,6 +17,7 @@
     </router-link>
   </div>
   <div class="btn" v-if="gameStore.gameOver">
+    <TransactionHash v-if="transactionInProgress" />
     <CustomButton
       v-if="web3WrongNetwork"
       @click="addNetwork()"
@@ -159,7 +160,6 @@ export default {
       if (value) {
         clearPollers()
       } else if (redeemCountdownOver.value) {
-        console.log('start on web3 connect')
         startTokenStatusPoller()
       }
     })
@@ -183,6 +183,18 @@ export default {
       }
     })
 
+    watch(transactionConfirmed, value => {
+      if (value) {
+        modalStore.openModal(ModalKey.txConfirmation)
+      }
+    })
+
+    watch(transactionError, value => {
+      if (value) {
+        modalStore.openModal(ModalKey.txError)
+      }
+    })
+
     watch(gameOver, value => {
       if (value) {
         modalStore.openModal(ModalKey.gameOver)
@@ -196,6 +208,7 @@ export default {
     })
 
     async function startTokenStatusPoller() {
+      console.log()
       await web3WittyPixels.enableProvider()
       if (
         !tokenStatusPoller &&

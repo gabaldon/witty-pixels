@@ -66,7 +66,6 @@ export function useWeb3() {
   onMounted(() => {
     if (window.ethereum) {
       web3 = new Web3(window.ethereum || 'ws://localhost:8545')
-      console.log(web3)
       // detect account change
       window.ethereum.on('accountsChanged', (accounts: any) => {
         gameStore.setProvider({
@@ -87,6 +86,7 @@ export function useWeb3() {
   })
 
   async function enableProvider() {
+    console.log('enable provider!!')
     gameStore.clearError(GameOverErrorKey.web3WrongNetwork)
     gameStore.clearError(GameOverErrorKey.web3Disconnected)
     if (web3) {
@@ -113,10 +113,12 @@ export function useWeb3() {
         } else {
           // The player is connected to the correct provider
           gameStore.clearError(GameOverErrorKey.web3WrongNetwork)
-          erc721Contract = new web3.eth.Contract(
-            WittyPixelsTokenInterface,
-            ERC721_ADDRESS
-          )
+          if (!erc721Contract) {
+            erc721Contract = new web3.eth.Contract(
+              WittyPixelsTokenInterface,
+              ERC721_ADDRESS
+            )
+          }
         }
       } else {
         gameStore.setError(
@@ -208,7 +210,6 @@ export function useWeb3() {
   async function checkTokenStatus() {
     console.log('checkTokenstatus')
     try {
-      console.log('checkTokenstatus 1')
       const result = await erc721Contract.methods
         .getTokenStatus(ERC721_TOKEN_ID)
         .call()
@@ -218,14 +219,15 @@ export function useWeb3() {
         result == TokenStatus.SoldOut
       ) {
         const erc20ContractAddress = await getTokenVaultAddress()
-        erc20Contract = new web3.eth.Contract(
-          WittyPixelsTokenVaultInterface,
-          erc20ContractAddress
-        )
+        if (!erc20Contract) {
+          erc20Contract = new web3.eth.Contract(
+            WittyPixelsTokenVaultInterface,
+            erc20ContractAddress
+          )
+        }
       } else {
         gameStore.setGameOverStatus(GameOverStatus.Fractionalizing)
       }
-      console.log('tokenStatus-----', result)
       gameStore.setTokenStatus(result ?? null)
       if (erc20Contract) {
         const erc20PlayerInfo: RedeemPlayerInfo | null =

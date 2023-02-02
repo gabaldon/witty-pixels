@@ -1,5 +1,5 @@
 <template>
-  <MainLayout>
+  <MainLayout :hideNavBar="true">
     <template v-slot:main>
       <div class="view-container disclaimer">
         <SectionHeader title="Disclaimer" />
