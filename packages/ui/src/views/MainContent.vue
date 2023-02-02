@@ -61,9 +61,6 @@ export default {
         ) {
           await player.interact({ key: router.currentRoute.value.params.id })
         }
-        if (gameStore.gameOver) {
-          await localStore.getMintInfo()
-        }
       }
     })
     onMounted(() => {
