@@ -1,5 +1,6 @@
 <template>
   <div class="pixel-board" ref="targetBoard">
+    <LoadingSpinner v-if="!pixelList.length" />
     <v-stage
       ref="stage"
       :config="configKonva"
@@ -38,9 +39,9 @@ export default {
     const store = useStore()
     let pixelMapPoller: any = null
     const stage = ref()
+    const layer = ref()
     const targetBoard = ref()
     let configKonva = ref({})
-
     onMounted(async () => {
       configKonva.value = {
         width: targetBoard.value.clientWidth,
@@ -56,7 +57,6 @@ export default {
     onBeforeUnmount(() => {
       clearInterval(pixelMapPoller)
     })
-
     const selectedColor = computed(() => {
       return store.selectedColor
     })
@@ -166,7 +166,6 @@ export default {
         x: pointerPosition.x - mousePointTo.x * nextScale,
         y: pointerPosition.y - mousePointTo.y * nextScale,
       }
-
       // Zoom on trackpad
       if (e.evt.ctrlKey) direction = -direction
       stageNode.value.scale({ x: nextScale, y: nextScale })
@@ -188,6 +187,7 @@ export default {
       isActive,
       generatePixel,
       authorizedPlayer,
+      layer,
     }
   },
 }
