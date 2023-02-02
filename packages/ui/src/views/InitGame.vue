@@ -5,7 +5,9 @@
         <h2 class="title">
           Participate in the biggest collaborative act of NFT creation to date!
         </h2>
-        <div class="background" />
+        <div class="background">
+          <PixelBoard />
+        </div>
       </div>
     </template>
     <template v-slot:bottom>
@@ -36,7 +38,6 @@ export default {
   .background {
     width: 100%;
     border-top: 2px solid $black;
-    background-image: url(../assets/grid.svg);
     background-position: center;
     background-size: cover;
     height: 100%;

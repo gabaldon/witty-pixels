@@ -42,7 +42,7 @@ export const useStore = defineStore('player', {
       const tokenInfo = this.localStore.getToken()
       const request = await this.api.getCanvas({
         checkpoint: this.checkpoint,
-        token: tokenInfo.token,
+        token: tokenInfo?.token ?? null,
       })
       if (request.error) {
         this.setError(ErrorKey.canvas, request.error)

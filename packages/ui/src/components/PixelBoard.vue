@@ -17,7 +17,7 @@
           @tap="previewPixelAndShowPanel({ x: pixel.x, y: pixel.y })"
         ></v-rect>
         <v-rect
-          v-if="pixelToPaint"
+          v-if="pixelToPaint && authorizedPlayer"
           :config="pixelToPaint"
           @click="showPanel()"
         ></v-rect>
@@ -27,16 +27,16 @@
 </template>
 
 <script lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { standardizePixelCoordinates } from '@/utils'
 import { useStore } from '@/stores/player'
 import type { Pixel, Coordinates, GeneratePixelArgs, PixelDB } from '@/types'
-import { PIXEL_SIZE, SCALE_BY, COLORS } from '@/constants'
+import { PIXEL_SIZE, SCALE_BY, COLORS, POLLER_MILLISECONDS } from '@/constants'
 
 export default {
   setup() {
     const store = useStore()
-    const pixel = ref()
+    let pixelMapPoller: any = null
     const stage = ref()
     const targetBoard = ref()
     let configKonva = ref({})
@@ -47,6 +47,14 @@ export default {
         height: targetBoard.value.clientHeight,
         draggable: true,
       }
+    })
+    onMounted(() => {
+      pixelMapPoller = setInterval(async () => {
+        await store.getPixelMap()
+      }, POLLER_MILLISECONDS)
+    })
+    onBeforeUnmount(() => {
+      clearInterval(pixelMapPoller)
     })
 
     const selectedColor = computed(() => {
@@ -60,6 +68,9 @@ export default {
     })
     const stageContainer = computed(() => {
       return stage.value.getStage().container()
+    })
+    const authorizedPlayer = computed(() => {
+      return store.username
     })
     const pixelList = computed(() => {
       return store.pixelMap?.flatMap((pixels: Array<PixelDB>) => {
@@ -100,8 +111,10 @@ export default {
       store.togglePalettePanel(true)
     }
     function previewPixelAndShowPanel({ x, y }: Coordinates) {
-      showPanel()
-      previewPixel({ x, y })
+      if (authorizedPlayer.value) {
+        showPanel()
+        previewPixel({ x, y })
+      }
     }
     function previewPixel({ x, y }: Coordinates) {
       if (
@@ -161,7 +174,6 @@ export default {
       stageNode.value.batchDraw()
     }
     return {
-      pixel,
       configKonva,
       previewPixel,
       pixelToPaint,
@@ -175,6 +187,7 @@ export default {
       pixelList,
       isActive,
       generatePixel,
+      authorizedPlayer,
     }
   },
 }
