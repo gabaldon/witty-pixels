@@ -20,9 +20,18 @@
 
 <script lang="ts">
 import playerMainImage from '@/assets/grid.svg?raw'
+import { useGameStore } from '@/stores/game'
+import { computed, onMounted } from 'vue'
 export default {
   setup() {
-    return { playerMainImage }
+    const gameStore = useGameStore()
+    onMounted(() => {
+      if (gameStore.isGameOver) {
+        gameStore.gameOver = true
+      }
+    })
+    const gameOver = computed(() => gameStore.gameOver)
+    return { playerMainImage, gameOver }
   },
 }
 </script>
