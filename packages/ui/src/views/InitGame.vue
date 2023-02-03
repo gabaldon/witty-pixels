@@ -6,14 +6,17 @@
           Participate in the biggest collaborative act of NFT creation to date!
         </h2>
         <div class="background">
+          <ProviderConnected class="float" />
           <PixelBoard />
         </div>
       </div>
     </template>
     <template v-slot:bottom>
-      <router-link to="/disclaimer">
-        <CustomButton type="primary"> PLAY NOW </CustomButton>
+      <router-link v-if="!gameOver" to="/disclaimer">
+        <CustomButton type="primary"> Play now </CustomButton>
       </router-link>
+      <ConnectToProvider v-if="redeemCountdownOver" />
+      <CreateTransaction v-if="redeemCountdownOver" :txType="TxType.Buy" />
     </template>
   </MainLayout>
 </template>
@@ -22,16 +25,21 @@
 import playerMainImage from '@/assets/grid.svg?raw'
 import { useGameStore } from '@/stores/game'
 import { computed, onMounted } from 'vue'
+import { TxType } from '@/types'
 export default {
   setup() {
     const gameStore = useGameStore()
     onMounted(() => {
       if (gameStore.isGameOver) {
-        gameStore.gameOver = true
+        gameStore.setGameOver()
+      }
+      if (gameStore.isRedeemCountdownOver) {
+        gameStore.setRedeemCountdownOver()
       }
     })
     const gameOver = computed(() => gameStore.gameOver)
-    return { playerMainImage, gameOver }
+    const redeemCountdownOver = computed(() => gameStore.redeemCountdownOver)
+    return { playerMainImage, gameOver, redeemCountdownOver, TxType }
   },
 }
 </script>
@@ -50,6 +58,13 @@ export default {
     background-position: center;
     background-size: cover;
     height: 100%;
+    .float {
+      margin: 16px;
+      position: absolute;
+      max-width: 700px;
+      z-index: 20;
+      width: 90vw;
+    }
   }
 }
 @media (max-width: 600px) {

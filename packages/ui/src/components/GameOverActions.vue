@@ -16,7 +16,7 @@
           class="time-left"
           :timestamp="gameStore.timeToRedeemInMilli"
           :seconds="true"
-          @clear-timestamp="allowRedeem"
+          @clear-timestamp="gameStore.setRedeemCountdownOver()"
         />
       </span>
       ...
@@ -72,12 +72,7 @@ export default {
       }
     })
 
-    function allowRedeem() {
-      gameStore.redeemCountdownOver = true
-    }
-
     return {
-      allowRedeem,
       gameStore,
       NETWORKS,
       CURRENT_NETWORK,
