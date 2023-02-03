@@ -4,6 +4,7 @@
       (!gameStore.redeemCountdownOver || fractionalizing) &&
       !gameStore.errors.web3WrongNetwork
     "
+    id="allowing-redeem"
     type="disable"
     :slim="true"
   >
@@ -22,8 +23,11 @@
       ...
     </p>
   </CustomButton>
-  <ConnectToProvider v-if="gameStore.redeemCountdownOver" />
-  <CreateTransaction v-if="txType" :txType="txType" />
+  <ConnectToProvider
+    id="connect-to-provider"
+    v-if="gameStore.redeemCountdownOver"
+  />
+  <CreateTransaction id="transaction-action" v-if="txType" :txType="txType" />
 </template>
 
 <script lang="ts">
