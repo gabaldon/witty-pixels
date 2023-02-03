@@ -10,10 +10,13 @@ describe('CustomButton', () => {
         plugins: [
           createTestingPinia({
             initialState: {
-              gameOver: false,
-              txInfo: null,
+              gameStore: {
+                gameOver: false,
+              },
+              localStore: {
+                txInfo: null,
+              },
             },
-            createSpy: vi.fn,
           }),
         ],
       },
