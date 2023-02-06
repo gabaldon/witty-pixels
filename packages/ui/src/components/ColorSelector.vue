@@ -54,7 +54,6 @@ export default {
   cursor: pointer;
   .text {
     font-size: 12px;
-    font-weight: bold;
     color: $black;
   }
   .black {
@@ -65,6 +64,6 @@ export default {
   }
 }
 .selected {
-  border: 2px solid $black;
+  border: 1.5px solid $black;
 }
 </style>

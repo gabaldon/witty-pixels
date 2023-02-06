@@ -10,7 +10,6 @@ import {
   ErrorKey,
 } from '@/types'
 import { COLORS, COLOR_FROM_HEX } from '@/constants'
-import { standardizePixelCoordinates } from '@/utils'
 import { useLocalStore } from './local'
 export const useStore = defineStore('player', {
   state: () => {
@@ -94,8 +93,10 @@ export const useStore = defineStore('player', {
           author: pixelFromMap?.o,
           fill: COLORS[pixelFromMap.c],
         }
+        console.log('0', this.pixelToPaint)
       } else {
         this.pixelToPaint = pixel
+        console.log('1', this.pixelToPaint)
       }
     },
     clearPixelToPaint() {

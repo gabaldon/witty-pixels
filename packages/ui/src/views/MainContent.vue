@@ -80,7 +80,7 @@ export default {
   position: absolute;
   max-width: 700px;
   z-index: 20;
-  width: 100%;
+  width: max-content;
   .game-info {
     margin: 16px;
     display: grid;

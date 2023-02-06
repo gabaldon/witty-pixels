@@ -1,9 +1,6 @@
 <template>
   <div class="pixel-board" ref="targetBoard">
     <LoadingSpinner v-if="!pixelMap[0]?.length" />
-
-    -- {{ pixelToPaint }} --
-
     <v-stage
       ref="stage"
       :config="configKonva"

@@ -104,7 +104,7 @@ export default {
   align-items: center;
   justify-content: center;
   .pixel-color {
-    border: 2px solid $black;
+    border: 1.5px solid $black;
     display: flex;
     width: 48px;
     height: 48px;
