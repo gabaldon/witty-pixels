@@ -46,7 +46,7 @@ import { COLORS } from '@/constants'
 import { computed } from 'vue'
 import { useStore } from '@/stores/player'
 import { useGameStore } from '@/stores/game'
-import { standardizePixelCoordinates, formatDistanceToNow } from '@/utils'
+import { formatDistanceToNow } from '@/utils'
 export default {
   setup() {
     const store = useStore()
@@ -81,7 +81,6 @@ export default {
       colors,
       paintPixel,
       pixelToPaint,
-      standardizePixelCoordinates,
       formatDistanceToNow,
       closePanel,
       COLORS,

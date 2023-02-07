@@ -2,14 +2,12 @@ import { defineStore } from 'pinia'
 import { ApiService } from '@/api'
 import router from '../router'
 import {
-  type Pixel,
   type PalettePoints,
   type PixelDB,
   type Errors,
   type InteractionInfo,
   ErrorKey,
 } from '@/types'
-import { COLORS, COLOR_FROM_HEX, PIXEL_SIZE } from '@/constants'
 import { useLocalStore } from './local'
 export const useStore = defineStore('player', {
   state: () => {
@@ -46,6 +44,7 @@ export const useStore = defineStore('player', {
       } else {
         if (request?.canvas?.pixels) {
           this.pixelMap = request.canvas.pixels
+          console.log('holaaa request get pixelmap', this.pixelMap)
           // Avoid reassign pixels in property to avoid computed property to recompute
         }
         if (request?.canvas?.diff) {
@@ -66,9 +65,11 @@ export const useStore = defineStore('player', {
     async paintPixel() {
       if (this.pixelToPaint && this.selectedColor) {
         const tokenInfo = this.localStore.getToken()
+        console.log('paint pixel in x', this.pixelToPaint.x)
+        console.log('paint pixel in y', this.pixelToPaint.y)
         const request = await this.api.drawPixel({
-          x: this.pixelToPaint.x / PIXEL_SIZE,
-          y: this.pixelToPaint.y / PIXEL_SIZE,
+          x: this.pixelToPaint.x,
+          y: this.pixelToPaint.y,
           color: this.selectedColor ? this.selectedColor : this.pixelToPaint.c,
           token: tokenInfo.token,
         })
@@ -82,8 +83,8 @@ export const useStore = defineStore('player', {
       }
     },
     setPixelToPaint(pixel: PixelDB) {
-      const pixelFromMap = this.pixelMap[pixel.x / PIXEL_SIZE]
-        ? this.pixelMap[pixel.x / PIXEL_SIZE][pixel.y / PIXEL_SIZE]
+      const pixelFromMap = this.pixelMap[pixel.x]
+        ? this.pixelMap[pixel.x][pixel.y]
         : null
       if (this.pixelMap && pixelFromMap?.o) {
         this.pixelToPaint = pixelFromMap

@@ -8,10 +8,9 @@
 <script lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useStore } from '@/stores/player'
-import type { Coordinates, GeneratePixelArgs } from '@/types'
+import { type Coordinates, type GeneratePixelArgs, ColorHexMap } from '@/types'
 import { PIXEL_SIZE, SCALE_BY, COLORS, POLLER_MILLISECONDS } from '@/constants'
 import Konva from 'konva'
-import { group } from 'console'
 
 export default {
   setup() {
@@ -30,27 +29,30 @@ export default {
       y: 0,
       width: PIXEL_SIZE,
       height: PIXEL_SIZE,
-      fill: 'white',
+      fill: ColorHexMap.white,
       strokeWidth: 1,
-      stroke: '#8a8a8a3d',
+      stroke: ColorHexMap.lightgrey,
     })
 
     onMounted(async () => {
       pixelMapPoller = setInterval(async () => {
         await store.getPixelMap()
       }, POLLER_MILLISECONDS)
+      console.log('stage width', targetBoard.value.clientWidth)
+      console.log('stage height', targetBoard.value.clientHeight)
       stage.value = new Konva.Stage({
         container: 'canvas-container',
         width: targetBoard.value.clientWidth,
         height: targetBoard.value.clientHeight,
         draggable: true,
+        pixelRatio: 1,
       })
-      stage.value.on('wheel', (e: any) => zoom(e))
+      // stage.value.on('wheel', (e: any) => zoom(e))
       stage.value.on('dragstart', () => {
-        targetBoard.value.style.cursor = 'move'
+        stage.value.style.cursor = 'move'
       })
       stage.value.on('dragend', () => {
-        targetBoard.value.style.cursor = 'pointer'
+        stage.value.style.cursor = 'pointer'
       })
       if (pixelMap.value[0]?.length) {
         drawGrid()
@@ -108,37 +110,33 @@ export default {
       const pixel = new Konva.Rect(
         standardizeToCanvasPixel({ x, y, color, strokeColor })
       )
+      pixel.perfectDrawEnabled(false)
+      pixel.shadowForStrokeEnabled(false)
       pixel.on('click tap', pixel => {
         if (selectedColor.value) {
           selectedPixel.attrs.fill = COLORS[selectedColor.value]
-        } else if (pixel.target.attrs.fill !== 'white') {
+        } else if (pixel.target.attrs.fill !== ColorHexMap.white) {
           selectedPixel.attrs.fill = pixel.target.attrs.fill
         } else {
-          selectedPixel.attrs.fill = 'white'
+          selectedPixel.attrs.fill = ColorHexMap.white
         }
         if (!pixelToPaint.value) {
-          selectedPixel.attrs.stroke = 'black'
+          selectedPixel.attrs.stroke = ColorHexMap.black
         }
         selectedPixel.position({
           x: pixel.target.attrs.x,
           y: pixel.target.attrs.y,
         })
         layer.batchDraw()
-        previewPixelAndShowPanel({
-          x: pixel.target.attrs.x,
-          y: pixel.target.attrs.y,
-        })
+        if (authorizedPlayer.value) {
+          showPanel()
+          previewPixel({ x, y })
+        }
       })
       group1.add(pixel)
     }
     function showPanel() {
       store.togglePalettePanel(true)
-    }
-    function previewPixelAndShowPanel({ x, y }: Coordinates) {
-      if (authorizedPlayer.value) {
-        showPanel()
-        previewPixel({ x, y })
-      }
     }
     function previewPixel({ x, y }: Coordinates) {
       if (
@@ -147,8 +145,8 @@ export default {
           generateId({ x, y })
       ) {
         store.setPixelToPaint({
-          x: x,
-          y: y,
+          x: CanvasCoordinateToDBCoordinate(x),
+          y: CanvasCoordinateToDBCoordinate(y),
           c: selectedColor.value ?? 0,
         })
       }
@@ -180,27 +178,39 @@ export default {
       group1.removeChildren()
       pixelList.value.map(pixel => {
         generatePixel({
-          x: pixel.x * PIXEL_SIZE,
-          y: pixel.y * PIXEL_SIZE,
+          x: DBCoordinateToCanvasCoordinate(pixel.x),
+          y: DBCoordinateToCanvasCoordinate(pixel.y),
           color: COLORS[pixel.c],
-          strokeColor: pixel.o ? COLORS[pixel.c] : '#8a8a8a3d',
+          strokeColor: pixel.o ? COLORS[pixel.c] : ColorHexMap.lightgrey,
         })
       })
       layer.batchDraw()
     }
     function drawGrid() {
       group2.add(selectedPixel)
+      console.log('pixelList', pixelList.value)
       pixelList.value.map(pixel => {
         generatePixel({
-          x: pixel.x * PIXEL_SIZE,
-          y: pixel.y * PIXEL_SIZE,
+          x: DBCoordinateToCanvasCoordinate(pixel.x),
+          y: DBCoordinateToCanvasCoordinate(pixel.y),
           color: COLORS[pixel.c],
-          strokeColor: pixel.o ? COLORS[pixel.c] : '#8a8a8a3d',
+          strokeColor: pixel.o ? COLORS[pixel.c] : ColorHexMap.lightgrey,
         })
       })
       layer.add(group1)
       layer.add(group2)
       stage.value.add(layer)
+    }
+    function setSelectedPixelToDefault() {
+      selectedPixel.attrs.fill = ColorHexMap.white
+      selectedPixel.attrs.stroke = ColorHexMap.lightgrey
+      layer.batchDraw()
+    }
+    function CanvasCoordinateToDBCoordinate(coordinate: number) {
+      return coordinate / PIXEL_SIZE
+    }
+    function DBCoordinateToCanvasCoordinate(coordinate: number) {
+      return coordinate * PIXEL_SIZE
     }
     watch(pixelMap, () => {
       drawGrid()
@@ -210,14 +220,12 @@ export default {
         selectedPixel.attrs.fill = COLORS[value]
         layer.batchDraw()
       } else {
-        selectedPixel.attrs.fill = 'white'
-        layer.batchDraw()
+        setSelectedPixelToDefault()
       }
     })
     watch(isPanelClosed, isClosed => {
       if (isClosed) {
-        selectedPixel.attrs.stroke = '#8a8a8a3d'
-        layer.batchDraw()
+        setSelectedPixelToDefault()
       }
     })
     watch(pixelList, () => {
