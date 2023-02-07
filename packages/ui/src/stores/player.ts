@@ -31,7 +31,7 @@ export const useStore = defineStore('player', {
       showPalettePanel: false as boolean,
       pixelToPaint: null as PixelDB | null,
       pixelMap: [] as Array<Array<PixelDB>>,
-      checkpoint: undefined,
+      checkpoint: 0,
     }
   },
   actions: {
