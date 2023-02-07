@@ -9,7 +9,7 @@ import {
   type InteractionInfo,
   ErrorKey,
 } from '@/types'
-import { COLORS, COLOR_FROM_HEX } from '@/constants'
+import { COLORS, COLOR_FROM_HEX, PIXEL_SIZE } from '@/constants'
 import { useLocalStore } from './local'
 export const useStore = defineStore('player', {
   state: () => {
@@ -28,10 +28,10 @@ export const useStore = defineStore('player', {
       history: [],
       playersGlobalStats: [],
       errors: {} as Errors,
-      selectedColor: null as string | null,
+      selectedColor: null as number | null,
       palettePoints: {} as PalettePoints,
       showPalettePanel: false as boolean,
-      pixelToPaint: null as Pixel | null,
+      pixelToPaint: null as PixelDB | null,
       pixelMap: [] as Array<Array<PixelDB>>,
       checkpoint: undefined,
     }
@@ -67,36 +67,28 @@ export const useStore = defineStore('player', {
       if (this.pixelToPaint && this.selectedColor) {
         const tokenInfo = this.localStore.getToken()
         const request = await this.api.drawPixel({
-          x: this.pixelToPaint.x,
-          y: this.pixelToPaint.y,
-          color: this.selectedColor
-            ? COLOR_FROM_HEX[this.selectedColor]
-            : COLOR_FROM_HEX[this.pixelToPaint.fill],
+          x: this.pixelToPaint.x / PIXEL_SIZE,
+          y: this.pixelToPaint.y / PIXEL_SIZE,
+          color: this.selectedColor ? this.selectedColor : this.pixelToPaint.c,
           token: tokenInfo.token,
         })
         if (request.error) {
           this.setError(ErrorKey.paint, request.error)
         } else {
           this.pixelMap[request.x][request.y] = request
+          console.log('pixel painted!!', this.pixelMap[request.x][request.y])
           this.clearError(ErrorKey.paint)
         }
       }
     },
-    setPixelToPaint(pixel: Pixel) {
-      const pixelFromMap = this.pixelMap[pixel.x]
-        ? this.pixelMap[pixel.x][pixel.y]
+    setPixelToPaint(pixel: PixelDB) {
+      const pixelFromMap = this.pixelMap[pixel.x / PIXEL_SIZE]
+        ? this.pixelMap[pixel.x / PIXEL_SIZE][pixel.y / PIXEL_SIZE]
         : null
       if (this.pixelMap && pixelFromMap?.o) {
-        this.pixelToPaint = {
-          ...pixel,
-          timestamp: pixelFromMap?.t,
-          author: pixelFromMap?.o,
-          fill: COLORS[pixelFromMap.c],
-        }
-        console.log('0', this.pixelToPaint)
+        this.pixelToPaint = pixelFromMap
       } else {
         this.pixelToPaint = pixel
-        console.log('1', this.pixelToPaint)
       }
     },
     clearPixelToPaint() {
@@ -106,10 +98,10 @@ export const useStore = defineStore('player', {
     togglePalettePanel(value: boolean) {
       this.showPalettePanel = value
     },
-    selectColor(color: string) {
+    selectColor(color: number) {
       this.selectedColor = color
       if (this.pixelToPaint) {
-        this.pixelToPaint.fill = color
+        this.pixelToPaint.c = color
       }
     },
     notify(payload: any) {
@@ -213,10 +205,7 @@ export const useStore = defineStore('player', {
         this.id = key
         this.username = username
         this.score = score
-        // Avoid re-render pallete when is the same palette
-        if (!isSamePallete(this.palettePoints, palette)) {
-          this.palettePoints = palette
-        }
+        this.palettePoints = palette
         this.color = color
         this.creationIndex = creationIndex
         if (request.lastInteractionIn) {
@@ -229,16 +218,3 @@ export const useStore = defineStore('player', {
     },
   },
 })
-
-function isSamePallete(
-  oldPalete: PalettePoints,
-  newPalette: PalettePoints
-): boolean {
-  return Object.entries(oldPalete).reduce(
-    (isDifferent, [colorName, oldPaletteColorAmount]) => {
-      const newPaletteColorAmount = newPalette[Number(colorName)]
-      return isDifferent || oldPaletteColorAmount === newPaletteColorAmount
-    },
-    false
-  )
-}

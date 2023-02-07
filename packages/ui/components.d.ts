@@ -6,6 +6,7 @@ import '@vue/runtime-core'
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     AppHeader: typeof import('./src/components/AppHeader.vue')['default']
+    CanvasPixel: typeof import('./src/components/CanvasPixel.vue')['default']
     ColorContainer: typeof import('./src/components/ColorContainer.vue')['default']
     ColorSelector: typeof import('./src/components/ColorSelector.vue')['default']
     ConnectToProvider: typeof import('./src/components/ConnectToProvider.vue')['default']
@@ -24,6 +25,8 @@ declare module '@vue/runtime-core' {
     InteractionEntry: typeof import('./src/components/InteractionEntry.vue')['default']
     InteractionInfo: typeof import('./src/components/InteractionInfo.vue')['default']
     LabelMintStatus: typeof import('./src/components/LabelMintStatus.vue')['default']
+    Lazy: typeof import('./src/components/Lazy.vue')['default']
+    LazyCompo: typeof import('./src/components/LazyCompo.vue')['default']
     ListStats: typeof import('./src/components/ListStats.vue')['default']
     LoadingSpinner: typeof import('./src/components/LoadingSpinner.vue')['default']
     MainLayout: typeof import('./src/components/MainLayout.vue')['default']
@@ -38,6 +41,7 @@ declare module '@vue/runtime-core' {
     NavBar: typeof import('./src/components/NavBar.vue')['default']
     PaintSvg: typeof import('./src/components/PaintSvg.vue')['default']
     PanelSlider: typeof import('./src/components/PanelSlider.vue')['default']
+    Pixel: typeof import('./src/components/Pixel.vue')['default']
     PixelBoard: typeof import('./src/components/PixelBoard.vue')['default']
     PlayerGlobalData: typeof import('./src/components/PlayerGlobalData.vue')['default']
     ProviderConnected: typeof import('./src/components/ProviderConnected.vue')['default']

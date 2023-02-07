@@ -15,8 +15,8 @@ export type PixelDB = {
   x: number
   y: number
   c: number
-  o: string
-  t: number
+  o?: string
+  t?: number
 }
 export enum ERC20Status {
   Awaiting = 'Awaiting',

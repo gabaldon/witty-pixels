@@ -3,7 +3,7 @@
     <div v-if="pixelToPaint" class="selected-pixel" @click="closePanel">
       <div
         class="pixel-color"
-        :style="{ 'background-color': pixelToPaint?.fill ?? 'lightgrey' }"
+        :style="{ 'background-color': COLORS[pixelToPaint?.c] ?? 'white' }"
       ></div>
       <div class="pixel-info">
         <div class="info-top">
@@ -12,12 +12,10 @@
             <p class="dark-text">y {{ pixelToPaint?.y }}</p>
           </div>
           <p class="light-text time">
-            {{ formatDistanceToNow(pixelToPaint?.timestamp) }}
+            {{ formatDistanceToNow(pixelToPaint?.t) }}
           </p>
         </div>
-        <p v-if="pixelToPaint?.author" class="dark-text">
-          @{{ pixelToPaint?.author }}
-        </p>
+        <p v-if="pixelToPaint?.o" class="dark-text">@{{ pixelToPaint?.o }}</p>
       </div>
     </div>
     <div v-if="!gameOver" class="palette">
@@ -61,7 +59,7 @@ export default {
           if (key !== '0' && key !== '1') {
             return {
               points: palette.value[key] ?? 0,
-              color: COLORS[key],
+              color: Number(key),
             }
           }
         })
@@ -86,6 +84,7 @@ export default {
       standardizePixelCoordinates,
       formatDistanceToNow,
       closePanel,
+      COLORS,
     }
   },
 }
